@@ -1,4 +1,4 @@
-# Hevy Routine Backup Tool - WebExtension
+# Hevy Routines Backup Tool - WebExtension
 
 > Export your [Hevy](https://hevy.com) workout routines to a cleanly structured text file.
 
