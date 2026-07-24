@@ -54,7 +54,3 @@ Since this extension is not published on the Chrome Web Store, you can easily in
 			None
 		}
 ```
-
-## Credits
-
-Developed by **isma** with the assistance of **Gemini 3.1 Pro**.

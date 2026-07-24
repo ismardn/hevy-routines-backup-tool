@@ -2,7 +2,7 @@
   "manifest_version": 3,
   "name": "Hevy Routines Backup Tool",
   "version": "1.0",
-  "description": "Export your Hevy routines to a structured text file. Created by isma & Gemini 3.1 Pro.",
+  "description": "Export your Hevy routines to a structured text file. Created by isma, assisted by AI",
   "action": {
     "default_title": "Export routines"
   },
