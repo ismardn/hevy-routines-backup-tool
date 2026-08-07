@@ -12,6 +12,7 @@ async function extractStructuredRoutines() {
     HOME_ROUTINES_CONTAINER: '[data-rbd-droppable-id="unsorted_routines"]',
     ROUTINE_LINK: 'a[href^="/routine/"]',
     TARGET_EXERCISE_CONTAINER: '.sc-42fff1f3-0.sc-44e0c7d2-0.sc-7600c742-5.bwRVVm.jMrQeE.jKZqEC',
+    SUPERSET_WRAPPER_SELECTOR: '.sc-8b891686-1',
     EXERCISE_TITLE_TAG: 'h5',
     EXERCISE_TEXT_TAG: 'p',
     WAIT_TIME_MS: 2500
@@ -54,11 +55,18 @@ async function extractStructuredRoutines() {
       if (targetContainer) {
         const exerciseTitles = targetContainer.querySelectorAll(CONFIG.EXERCISE_TITLE_TAG);
         let exercisesOutput = [];
+        
+        let currentSupersetRoot = null;
+        let currentSupersetBlock = [];
 
         if (exerciseTitles.length > 0) {
-          exerciseTitles.forEach((titleNode) => {
+          for (let j = 0; j < exerciseTitles.length; j++) {
+            const titleNode = exerciseTitles[j];
             const exerciseNode = titleNode.parentElement;
-            if (!exerciseNode) return;
+            if (!exerciseNode) continue;
+
+            const supersetWrapper = titleNode.closest(CONFIG.SUPERSET_WRAPPER_SELECTOR);
+            const isSuperset = (supersetWrapper !== null);
 
             const name = titleNode.innerText.trim();
             let setsCount = "N/A";
@@ -81,23 +89,47 @@ async function extractStructuredRoutines() {
               }
             });
 
-            let singleExercise = `\t--- ${name} ---\n`;
+            const tTitle = isSuperset ? "\t\t" : "\t";
+            const tProp  = isSuperset ? "\t\t\t" : "\t\t";
+            const tDesc  = isSuperset ? "\t\t\t\t" : "\t\t\t";
+
+            let singleExercise = `${tTitle}--- ${name} ---\n`;
+            singleExercise += `${tProp}Sets: ${setsCount}\n`;
+            singleExercise += `${tProp}Rest Time: ${restTime}\n`;
+            singleExercise += `${tProp}Description:\n`;
             
-            singleExercise += `\t\tSets: ${setsCount}\n`;
-            singleExercise += `\t\tRest Time: ${restTime}\n`;
-            singleExercise += `\t\tDescription:\n`;
-            
-            let formattedDesc = "\t\t{\n";
+            let formattedDesc = `${tProp}{\n`;
             if (description !== "None") {
-              formattedDesc += description.split('\n').map(line => `\t\t\t${line}`).join('\n') + "\n";
+              formattedDesc += description.split('\n').map(line => `${tDesc}${line}`).join('\n') + "\n";
             } else {
-              formattedDesc += "\t\t\tNone\n";
+              formattedDesc += `${tDesc}None\n`;
             }
-            formattedDesc += "\t\t}";
-            
+            formattedDesc += `${tProp}}`;
             singleExercise += formattedDesc;
-            exercisesOutput.push(singleExercise);
-          });
+
+            if (isSuperset) {
+              if (currentSupersetRoot !== supersetWrapper) {
+                if (currentSupersetBlock.length > 0) {
+                    exercisesOutput.push("\tSuperset {\n\n" + currentSupersetBlock.join("\n\n") + "\n\n\t}");
+                    currentSupersetBlock = [];
+                }
+                currentSupersetRoot = supersetWrapper;
+              }
+              
+              currentSupersetBlock.push(singleExercise);
+              
+              const nextTitle = exerciseTitles[j + 1];
+              const nextSupersetWrapper = nextTitle ? nextTitle.closest(CONFIG.SUPERSET_WRAPPER_SELECTOR) : null;
+
+              if (nextSupersetWrapper !== currentSupersetRoot) {
+                exercisesOutput.push("\tSuperset {\n\n" + currentSupersetBlock.join("\n\n") + "\n\n\t}");
+                currentSupersetBlock = [];
+                currentSupersetRoot = null;
+              }
+            } else {
+              exercisesOutput.push(singleExercise);
+            }
+          }
           
           routineOutput += exercisesOutput.join("\n\n\n");
 
